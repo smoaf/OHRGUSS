@@ -1,0 +1,177 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<meta name="description" content="Design a pair of custom-fit earplugs in the browser and export print files for the plugs, a silicone mould, a fitted case and a sizing kit.">
+<link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 28 28'%3E%3Crect width='28' height='28' rx='6' fill='%230a0a0a'/%3E%3Cg fill='%233333ff'%3E%3Ccircle cx='10' cy='6' r='1.6'/%3E%3Ccircle cx='14' cy='6' r='1.6'/%3E%3Ccircle cx='18' cy='6' r='1.6'/%3E%3Ccircle cx='6' cy='10' r='1.6'/%3E%3Ccircle cx='22' cy='10' r='1.6'/%3E%3Ccircle cx='6' cy='14' r='1.6'/%3E%3Ccircle cx='14' cy='14' r='1.6'/%3E%3Ccircle cx='18' cy='14' r='1.6'/%3E%3Ccircle cx='22' cy='14' r='1.6'/%3E%3Ccircle cx='6' cy='18' r='1.6'/%3E%3Ccircle cx='10' cy='18' r='1.6'/%3E%3Ccircle cx='18' cy='18' r='1.6'/%3E%3Ccircle cx='10' cy='22' r='1.6'/%3E%3Ccircle cx='14' cy='22' r='1.6'/%3E%3C/g%3E%3C/svg%3E">
+<title>Ohrguss Earplug Generator</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Archivo:wdth,wght@62..125,400..900&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="css/ohrguss.css">
+</head>
+<body>
+<div class="app">
+  <div class="stage" id="stage">
+    <canvas id="view" aria-label="3D preview. Drag to turn, pinch or scroll to zoom."></canvas>
+    <div class="mark"><b>OHRGUSS</b><span>Custom earplug generator · v0.2</span></div>
+    <div class="tabs" role="group" aria-label="Part to show">
+      <button class="tab" id="tab-plug" data-kind="plug" aria-pressed="true">Plugs</button>
+      <button class="tab" id="tab-mould" data-kind="mould" aria-pressed="false">Mould</button>
+      <button class="tab" id="tab-kit" data-kind="kit" aria-pressed="false">Sizing kit</button>
+      <button class="tab" id="tab-case" data-kind="case" aria-pressed="false">Case</button>
+    </div>
+    <div class="read" id="read"></div>
+    <button class="save" id="save">Save package</button>
+    <div class="editor" id="editor" hidden>
+      <p>Drag A and B onto opposite edges of the coin or card. Drag the ring onto the canal opening.</p>
+      <canvas id="ed-canvas"></canvas>
+      <div class="bar">
+        <select id="ed-ref" aria-label="Reference object">
+          <option value="23.25">1 € coin · 23.25 mm</option>
+          <option value="25.75">2 € coin · 25.75 mm</option>
+          <option value="85.6">Bank card long edge · 85.6 mm</option>
+          <option value="0">Other length</option>
+        </select>
+        <input type="number" id="ed-mm" min="1" step="0.1" placeholder="mm" aria-label="Reference length in mm" hidden>
+        <button class="btn" id="ed-cancel">Cancel</button>
+        <button class="btn go" id="ed-use">Use photo</button>
+      </div>
+    </div>
+  </div>
+
+  <div class="panel">
+    <nav class="nav" id="nav" aria-label="Settings"></nav>
+
+    <section data-sec="general" hidden>
+      <h2>General</h2>
+      <h3>Plugs</h3>
+      <label class="check" for="c-cord"><input type="checkbox" id="c-cord" data-key="cord" data-view="plug">Cord ring on the outside</label>
+      <label class="check" for="c-grip"><input type="checkbox" id="c-grip" data-key="grip" data-view="plug">Removal grip</label>
+      <p class="note" id="grip-note">A small tab on the outer face for pulling the plug out. Not needed with the cord ring, which already works as a grip.</p>
+      <label class="check" for="c-marks"><input type="checkbox" id="c-marks" data-key="marks" data-view="plug">Left and right marks</label>
+      <p class="note">An engraved L or R on each plug, on the mould and on the case lid. Mould cores carry one notch for left and two for right.</p>
+      <h3>Mould</h3>
+      <div id="mould-rows"></div>
+      <label class="check" for="c-coreTaper"><input type="checkbox" id="c-coreTaper" data-key="coreTaper" data-view="mould">Tapered bore core</label>
+      <p class="note">Sturdier on filament printers: 3 mm at the filter seat, bore size at the tip. Turn off for a constant bore on resin printers.</p>
+      <h3>Case</h3>
+      <label class="check" for="c-caseHinge"><input type="checkbox" id="c-caseHinge" data-key="caseHinge" data-view="case">Hinge with rod</label>
+      <p class="note">Takes a 2 mm rod or a piece of 1.75 mm printer filament as the axle.</p>
+      <label class="check" for="c-caseLoop"><input type="checkbox" id="c-caseLoop" data-key="caseLoop" data-view="case">Lanyard loop</label>
+      <div class="seg" role="group" aria-label="Case closure" style="margin:6px 0 12px">
+        <button id="close-click" data-mag="0" aria-pressed="true">Click latch</button>
+        <button id="close-mag" data-mag="1" aria-pressed="false">Magnets 4 × 2 mm</button>
+      </div>
+      <div id="case-rows"></div>
+      <h3>Sizing kit</h3>
+      <div class="seg" role="group" aria-label="Sizing kit contents" style="margin-bottom:8px">
+        <button data-kit="sizes" aria-pressed="true">All sizes</button>
+        <button data-kit="fine" aria-pressed="false">Fine steps</button>
+        <button data-kit="bends" aria-pressed="false">Bends</button>
+      </div>
+      <p class="note" id="kit-note"></p>
+      <h3>Design</h3>
+      <p class="note">Every package contains design.json. Load it here to continue a design.</p>
+      <button class="btn" id="load-design">Load design</button>
+      <input type="file" id="design-file" accept=".json,application/json" hidden>
+    </section>
+
+    <section data-sec="scan" hidden>
+      <h2>Scan<small>OPTIONAL</small></h2>
+      <div class="earbar"><div class="seg earseg" role="group" aria-label="Ear"><button data-ear="L">Left</button><button data-ear="R">Right</button></div></div>
+      <h3>Photo</h3>
+      <div id="photo-none">
+        <p class="note">Hold a coin flat beside the ear and photograph the ear straight on. The photo sits behind the plug at true size.</p>
+        <button class="btn solid" id="photo-load">Take or choose photo</button>
+        <input type="file" id="photo-file" accept="image/*" hidden>
+      </div>
+      <div id="photo-have" hidden>
+        <p class="note" id="photo-info"></p>
+        <label class="check" for="see"><input type="checkbox" id="see" checked>See-through plugs</label>
+        <button class="btn" id="photo-remove">Remove photo</button>
+      </div>
+      <h3>3D scan</h3>
+      <div id="scan-none">
+        <p class="note">Load one mesh from a 3D scanner app. It can hold one ear or the whole head: you mark the canal opening for each ear in the same scan.</p>
+        <button class="btn solid" id="scan-load">Load scan · STL OBJ PLY</button>
+        <input type="file" id="scan-file" accept=".stl,.obj,.ply" hidden>
+      </div>
+      <div id="scan-have" hidden>
+        <p class="note" id="scan-info"></p>
+        <button class="btn solid" id="scan-mark">Mark canal opening</button>
+        <div id="fit-wrap" hidden style="margin-top:10px">
+          <label class="check" for="fit"><input type="checkbox" id="fit">Fit concha to scan</label>
+          <div id="scan-rows"></div>
+        </div>
+        <div class="btns">
+          <button class="btn" id="scan-units">Scale ×1000</button>
+          <button class="btn" id="scan-remove">Remove scan</button>
+        </div>
+      </div>
+    </section>
+
+    <section data-sec="canal" hidden>
+      <h2>Canal<small>15 VARIANTS</small><button class="reset" data-reset="canal">Reset</button></h2>
+      <div class="earbar"><div class="seg earseg" role="group" aria-label="Ear"><button data-ear="L">Left</button><button data-ear="R">Right</button></div><button class="copy" data-copy="canal">Copy to other ear</button></div>
+      <div class="grid" id="variants"></div>
+      <div id="canal-rows"></div>
+      <details><summary>Fine tune</summary><div id="canal-fine"></div></details>
+    </section>
+
+    <section data-sec="concha" hidden>
+      <h2>Concha<button class="reset" data-reset="concha">Reset</button></h2>
+      <div class="earbar"><div class="seg earseg" role="group" aria-label="Ear"><button data-ear="L">Left</button><button data-ear="R">Right</button></div><button class="copy" data-copy="concha">Copy to other ear</button></div>
+      <div id="concha-rows"></div>
+    </section>
+
+    <section data-sec="filter" hidden>
+      <h2>Filter<button class="reset" data-reset="filter">Reset</button></h2>
+      <div class="seg" role="group" aria-label="Plug type" style="margin-bottom:12px">
+        <button id="type-solid" data-solid="1" aria-pressed="false">Solid plug</button>
+        <button id="type-filter" data-solid="0" aria-pressed="true">Filter insert</button>
+      </div>
+      <div id="solid-wrap" hidden>
+        <p class="note">Full plugs with no sound bore and no filter seat, for work or sleep.</p>
+        <label class="check" for="c-vent"><input type="checkbox" id="c-vent" data-key="vent" data-view="plug">Pressure vent</label>
+        <div id="vent-rows"></div>
+        <p class="note">A thin channel from the outer face to the tip that lets pressure equalise. It lowers the attenuation a little. In the mould it is formed by a wire of this width that you lay in the channel and pull out after curing.</p>
+      </div>
+      <div id="filter-wrap">
+        <p class="note">Applies to both ears.</p>
+        <div id="filter-rows"></div>
+        <div id="seat-wrap"><div id="seat-rows"></div></div>
+        <h3>Your filter</h3>
+        <div id="flt-none">
+          <p class="note">Load a 3D scan or model of your filter. The seat is then shaped as its negative, so the filter drops in.</p>
+          <button class="btn solid" id="flt-load">Load filter · STL OBJ PLY</button>
+          <input type="file" id="flt-file" accept=".stl,.obj,.ply" hidden>
+        </div>
+        <div id="flt-have" hidden>
+          <p class="note" id="flt-info"></p>
+          <label class="check" for="c-filterOn"><input type="checkbox" id="c-filterOn" data-key="filterOn">Shape the seat from this filter</label>
+          <div id="flt-rows"></div>
+          <div class="btns">
+            <button class="btn" id="flt-flip">Flip ends</button>
+            <button class="btn" id="flt-axis">Other axis</button>
+            <button class="btn" id="flt-remove" style="grid-column:1/-1">Remove filter</button>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <section data-sec="colour" hidden>
+      <h2>Colour<small>PREVIEW ONLY</small></h2>
+      <div class="pal" id="pal" role="group" aria-label="Colour of all parts"></div>
+      <div class="now"><i id="now"></i><input type="text" id="hex" maxlength="7" spellcheck="false" aria-label="Colour as hex value"></div>
+    </section>
+
+    <p class="foot">Prototype. Plugs made from these files are not certified hearing protection. Confirm the canal size with the sizing kit, use skin-safe material and check the seal before you rely on a plug.</p>
+  </div>
+</div>
+
+<script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
+<script id="core" src="js/core.js"></script>
+<script src="js/app.js"></script>
+</body>
+</html>

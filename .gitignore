@@ -1,0 +1,5 @@
+node_modules/
+dist/
+web/ohrguss-offline.html
+.DS_Store
+*.log

@@ -1,0 +1,23 @@
+{
+  "name": "ohrguss",
+  "version": "0.2.0",
+  "description": "Design custom-fit earplugs in the browser and export print files for plugs, a silicone mould, a fitted case and a sizing kit.",
+  "private": true,
+  "license": "GPL-3.0-only",
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/smoaf/OHRGUSS.git"
+  },
+  "homepage": "https://smoaf.github.io/OHRGUSS/",
+  "engines": {
+    "node": ">=20"
+  },
+  "scripts": {
+    "start": "node scripts/serve.mjs",
+    "test": "node --test test/geometry.test.mjs",
+    "build": "node scripts/build-single.mjs"
+  },
+  "devDependencies": {
+    "three": "0.128.0"
+  }
+}
