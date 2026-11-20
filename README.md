@@ -2,7 +2,7 @@
 
 **Custom-fit earplugs from a browser.** Design a pair of earplugs for your ears and download print files for the plugs, a silicone mould, a fitted case and a sizing kit.
 
-**[Open the app](https://smoaf.github.io/OHRGUSS/)** · [Offline version](https://smoaf.github.io/OHRGUSS/ohrguss-offline.html) · [Printing and casting guide](docs/printing.md) · [Concept and research](docs/concept.md)
+**[Open the app](https://smoaf.github.io/OHRGUSS/)** · [Offline version](https://smoaf.github.io/OHRGUSS/ohrguss-offline.html) · [Scanning guide](docs/scanning.md) · [Printing and casting guide](docs/printing.md) · [Concept and research](docs/concept.md)
 
 ![Ohrguss showing a left and right plug](docs/images/plugs.png)
 
@@ -29,7 +29,7 @@
 
 1. **Size:** print the sizing kit (Sizing kit tab → Save package) and find the canal gauge that seals comfortably in each ear.
 2. **Canal:** in **Canal**, pick that size and bend for each ear with the Left/Right switch.
-3. **Concha:** in **Concha**, adjust width, height and thickness. With a scan or photo loaded (**Scan**), match the plug to your ear.
+3. **Concha:** in **Concha**, adjust width, height and thickness. With a scan or photo loaded (**Scan**), match the plug to your ear; see the [scanning guide](docs/scanning.md).
 4. **Filter:** in **Filter**, choose a filter insert or a solid plug. Load a scan of your filter if you have one.
 5. **Extras:** in **General**, switch on the cord ring or grip, marks, and the mould and case options.
 6. **Save package** and follow the [printing and casting guide](docs/printing.md).
@@ -63,9 +63,10 @@ scripts/
 test/
   geometry.test.mjs     Checks that every part is a closed, single-piece mesh
 docs/
+  scanning.md           Scanning guide: theory, 3D scan, photo
   printing.md           Printing and casting guide
   concept.md            Concept, research, data sources, legal notes
-  images/               Screenshots
+  images/               Screenshots and step-by-step pictures (scan/, print/)
 .github/workflows/
   pages.yml             Runs the tests, then publishes web/ to GitHub Pages
 ```
